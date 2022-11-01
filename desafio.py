@@ -1,5 +1,6 @@
 from abc import ABC, abstractclassmethod, abstractproperty
 from datetime import datetime
+import textwrap
 from wsgiref.validate import validator
 
 class Cliente:
@@ -211,10 +212,84 @@ def depositar(clientes):
     cliente.realizar_transacao(conta, transacao)
 
 def sacar(clientes):
-    pass
+    cpf = input("Informe o CPF do cliente: ")
+    cliente = filtrar_cliente(cpf, clientes)
+    
+    if not cliente:
+        print("\n@@@ Cliente nao encontrado! @@@")
+        return
+    
+    valor = float(input("Informe o valor do saque: "))
+    transacao = Saque(valor)
+    
+    conta = recuperar_conta_cliente(cliente)
+    if not conta:
+        return
+    
+    cliente.realizar_transacao(conta, transacao)
 
 def exibir_extrato(clientes):
-    pass
+    cpf = input("Informe o CPF do cliente: ")
+    cliente = filtrar_cliente(cpf, clientes)
+    
+    if not cliente:
+        print("\n@@@ Cliente nao encontrado! @@@")
+        return
+    
+    conta = recuperar_conta_cliente(cliente)
+    if not conta:
+        return
+    
+    print("\n=============== EXTRATO ===============")
+    transacoes = conta.historico.transacoes
+    
+    extrato = ""
+    if not transacoes:
+        extrato = "Nao foram realizadas movimentacoes."
+    else:
+        for transacao in transacoes:
+            extrato += f"\n{transacao['tipo']}:\n\tR${transacao['valor']:.2f}"
+    
+    print(extrato)
+    print(f"\nSaldo:\n\tR$ {conta.saldo:.2f}")
+    print("========================================")
+
+def criar_cliente(clientes):
+    cpf = input("Informe o CPF (somente numero): ")
+    cliente = filtrar_cliente(cpf, clientes)
+    
+    if cliente:
+        print("\n@@@ Ja existe cliente com esse CPF @@@")
+        return
+    
+    nome = input("Informe o nome completo: ")
+    data_nascimento = input("Informe a data de nascimento (dd-mm-aaaa)")
+    endereco = input("Informe o endereco (logradouro, nro - bairro - cidade/sigla estado): ")
+    
+    cliente = PessoaFisica(nome=nome, data_nascimento=data_nascimento, cpf=cpf, endereco=endereco)
+    
+    clientes.append(cliente)
+    
+    print("\n=== Cliente criado com sucesso! ===")
+
+def criar_conta(numero_conta, clientes, contas):
+    cpf = input("Informe o CPF do cliente: ")
+    cliente = filtrar_cliente(cpf, clientes)
+    
+    if not cliente:
+        print("\n@@@ Cliente nao encontrado, fluxo de criacao de conta encerrado! @@@")
+        return
+    
+    conta = ContaCorrente.nova_conta(cliente=cliente, numero=numero_conta)
+    contas.append(conta)
+    cliente.contas.append(conta)
+    
+    print("\n=== Conta criada com sucesso! ===")
+
+def listar_contas(contas):
+    for conta in contas:
+        print("=" * 100)
+        print(textwrap.dedent(str(conta)))
 
 def main():
     clientes = []
